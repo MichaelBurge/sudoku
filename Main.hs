@@ -84,7 +84,8 @@ board_union ∷ Board → Board → Board
 board_union = board_set union
 
 possibilities ∷ Board → [Board]
-possibilities board = do
+possibilities board = let
+  result = do
   row_idx ← [1..length board]
   let row = board !! (row_idx-1)
   cell_idx ← [1.. length row]
@@ -96,10 +97,13 @@ possibilities board = do
       let newRow = (take (cell_idx-1) row) ++ [[possibility]] ++ (drop cell_idx row)
       let newBoard = (take (row_idx-1) board) ++ [newRow] ++ (drop row_idx board)
       return newBoard
+  in if null result
+        then return board
+        else result     
   
 
 basicApply ∷ Filter → Board → Board
-basicApply f b = foldl1 board_union $ filter f $ possibilities b
+basicApply f b = foldl1 board_intersect $ filter f $ possibilities b
 
 lift2 :: [[Integer]] -> Board
 lift2 = let
@@ -113,7 +117,7 @@ sample4 = [
  [ 5,7,1,6,2,8,3,4,9],
  [ 9,3,6,7,4,1,5,8,2],
  [ 6,8,2,5,3,9,1,7,4],
- [ 3,5,9,1,0,4,6,2,8],
+ [ 3,5,9,1,0,0,6,2,8],
  [ 7,1,4,8,6,2,9,5,3],
  [ 8,6,3,4,1,7,2,9,5],
  [ 1,9,5,2,8,6,4,3,7],
@@ -121,5 +125,51 @@ sample4 = [
 
 printBoard :: Board -> String
 printBoard b = foldl1 (\a b -> a ++ "\n" ++ b) $ map show b
+
+printBoards :: [Board] -> IO ()
+printBoards = mapM_ (\s -> putStrLn s >> putStrLn "\n") . map printBoard
+
+sample5 :: [[Integer]]
+sample5 = [
+ [ 2,4,8,3,9,5,7,1,6],
+ [ 5,7,1,6,2,8,3,4,9],
+ [ 9,3,6,7,4,1,5,8,2],
+ [ 0,0,0,0,0,0,0,0,4],
+ [ 0,0,0,0,0,0,0,0,0],
+ [ 7,1,4,8,6,2,9,5,3],
+ [ 8,6,3,4,1,7,2,9,5],
+ [ 1,9,5,2,8,6,4,3,7],
+ [ 4,2,7,9,5,3,8,6,1]]
+
+allPossibilities :: Board -> [Board]
+allPossibilities b = nub $ let
+  ps = possibilities b
+  in if length ps == 0
+         then [b]
+         else concatMap allPossibilities $ possibilities b
+
+finalApply :: Filter -> Board -> [Board]
+finalApply f = filter f . allPossibilities
+
+rulesFilter :: Filter
+rulesFilter b = foldl1 (&&) $ map ($ b) [allRowsGood, allColsGood, allSegmentsGood]
+
+repeatApply :: Filter -> Board -> Board
+repeatApply f b = let
+  g [] = [1..9]
+  g xs = xs
+  h = map (map g)
+  result = h $ basicApply f b
+  in if result == b
+     then result
+     else h $ repeatApply f result
+
+answer = printBoards $ finalApply rulesFilter (lift2 sample5)
+-- TODO:
+-- 1. Write backtrackApply
+-- 2. Write more filters
+-- 3. Need example sudoku puzzles
+-- 4. Need a way to load sukodu puzzles from outside files
+
 --backtrackApply ∷ Filter → Board → Board
 --backtrackApply 

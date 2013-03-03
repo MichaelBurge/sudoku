@@ -86,17 +86,40 @@ board_union = board_set union
 possibilities ∷ Board → [Board]
 possibilities board = do
   row_idx ← [1..length board]
-  let row = board !! row_idx
+  let row = board !! (row_idx-1)
   cell_idx ← [1.. length row]
-  let cell = row !! cell_idx
-  possibility ← cell
-  let newRow = (take (cell_idx-1) row) ++ [[possibility]] ++ (drop cell_idx row)
-  let newBoard = (take (row_idx-1) board) ++ [newRow] ++ (drop row_idx board)
-  return newBoard
+  let cell = row !! (cell_idx-1)
+  if 1 == length cell
+    then []
+    else do
+      possibility ← cell
+      let newRow = (take (cell_idx-1) row) ++ [[possibility]] ++ (drop cell_idx row)
+      let newBoard = (take (row_idx-1) board) ++ [newRow] ++ (drop row_idx board)
+      return newBoard
   
 
 basicApply ∷ Filter → Board → Board
 basicApply f b = foldl1 board_union $ filter f $ possibilities b
 
+lift2 :: [[Integer]] -> Board
+lift2 = let
+  f x = case x of
+    0 -> [1..9]
+    _ -> [x]
+  in map (map f)
+sample4 :: [[Integer]]
+sample4 = [
+ [ 2,4,8,3,9,5,7,1,6],
+ [ 5,7,1,6,2,8,3,4,9],
+ [ 9,3,6,7,4,1,5,8,2],
+ [ 6,8,2,5,3,9,1,7,4],
+ [ 3,5,9,1,0,4,6,2,8],
+ [ 7,1,4,8,6,2,9,5,3],
+ [ 8,6,3,4,1,7,2,9,5],
+ [ 1,9,5,2,8,6,4,3,7],
+ [ 4,2,7,9,5,3,8,6,1]]
+
+printBoard :: Board -> String
+printBoard b = foldl1 (\a b -> a ++ "\n" ++ b) $ map show b
 --backtrackApply ∷ Filter → Board → Board
 --backtrackApply 

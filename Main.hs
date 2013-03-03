@@ -164,7 +164,41 @@ repeatApply f b = let
      then result
      else h $ repeatApply f result
 
-answer = printBoards $ finalApply rulesFilter (lift2 sample5)
+test1 :: Board
+test1 = lift2 $ [
+  [8, 0, 0, 0, 3, 0, 0, 0, 1],
+  [3, 9, 0, 0, 0, 0, 0, 4, 7],
+  [0, 0, 0, 4, 0, 5, 0, 0, 0],
+  [0, 2, 0, 0, 8, 0, 0, 9, 6],
+  [0, 0, 9, 0, 0, 0, 7, 0, 0],
+  [7, 3, 0, 0, 4, 0, 0, 5, 0],
+  [0, 0, 0, 6, 0, 3, 0, 0, 0],
+  [6, 4, 0, 0, 0, 0, 0, 8, 5],
+  [2, 0, 0, 0, 7, 0, 0, 0, 9]]
+
+doesItHelp :: (Board -> Board) -> Board -> Bool
+doesItHelp f b = (f b) /= b
+
+flatten :: Board -> [[Integer]]
+flatten = let
+  f [x] = x
+  f _ = 0
+  in map (map f)
+
+spotsHelped :: (Board -> Board) -> Board -> [(Int, Int, Integer)]
+spotsHelped f b = let
+  result = f b
+  in do
+    row_idx <- [1..length b]
+    let row = b !! (row_idx - 1)
+    let result_row = result !! (row_idx - 1)
+    cell_idx <- [1..length row]
+    let cell = row !! (cell_idx - 1)
+    let result_cell = result_row !! (cell_idx - 1)
+    if length cell /= 1 && length result_cell == 1
+       then return $ (row_idx, cell_idx, (head result_cell))
+       else []
+
 -- TODO:
 -- 1. Write backtrackApply
 -- 2. Write more filters
